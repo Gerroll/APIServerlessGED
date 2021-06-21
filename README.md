@@ -4,4 +4,4 @@
 
 `sls offline`
 
-`sls invoke local -f getDocumentWhereUuid --path lib\getDocumentWhereUuid.json`
+`sls deploy`

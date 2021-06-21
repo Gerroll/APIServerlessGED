@@ -23,6 +23,9 @@ class FormData {
         }
 
         let contentType = this.event.headers["Content-Type"]
+        if (!contentType) {
+            throw new FormDataError("Content type undefined")
+        }
         const contentTypeArray = contentType.split(';').map(item => item.trim())
         if (contentTypeArray && contentTypeArray.length) {
             contentType = contentTypeArray[0]

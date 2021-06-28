@@ -3,7 +3,6 @@ const DynamoBbClient = require('./utils/DynamoBbClient')
 const FormData = require('./utils/FormData')
 const HttpResponseUtils = require('./utils/HttpResponseUtils')
 const { v4: uuidv4 } = require('uuid')
-const S3Error = require('./utils/S3Error')
 
 const bucketName = process.env.s3bucketone
 const gedDirPathS3 = "ged/"
@@ -12,17 +11,21 @@ const tableName = "Document"
 
 /* Return the list of all documents already uploaded */
 module.exports.getDocuments = async (event) => {
-    const itemListDb = await DynamoBbClient.selectAll(tableName)
-
     const itemListJson = []
 
-    // Convert dynamoDb class to json format
-    itemListDb.Items.forEach((object) => {
-        itemListJson.push({
-            "uuid": object.uuid.S,
-            "fileName": object.fileName.S
+    try {
+        const itemListDb = await DynamoBbClient.selectAll(tableName)
+
+        // Convert dynamoDb class to json format
+        itemListDb.Items.forEach((object) => {
+            itemListJson.push({
+                "uuid": object.uuid.S,
+                "fileName": object.fileName.S
+            })
         })
-    })
+    } catch (e) {
+        return HttpResponseUtils.getReponseError(500, e.message)
+    }
     return HttpResponseUtils.getReponse(200, itemListJson)
 }
 
@@ -38,13 +41,24 @@ module.exports.getDocumentWhereUuid = async (event) => {
 
     const uuid = pathParameters.uuid
 
-    const item = await DynamoBbClient.selectWhereUuid(tableName, uuid)
+    let item
+
+    try {
+        item = await DynamoBbClient.selectWhereUuid(tableName, uuid)
+    } catch (e) {
+        return HttpResponseUtils.getReponseError(500, e.message)
+    }
 
     if (!item || !item.Item) {
         return HttpResponseUtils.getReponseError(400, "Path parameter 'uuid' don't exist in DB")
     }
 
-    const url = S3Client.getSignedUrl(bucketName, item.Item.keyDocument.S)
+    let url
+    try {
+        url = await S3Client.getSignedUrl(bucketName, item.Item.keyDocument.S)
+    } catch (e) {
+        return HttpResponseUtils.getReponseError(500, e.message)
+    }
 
     return HttpResponseUtils.getReponse(200, {
         'signed_url': url

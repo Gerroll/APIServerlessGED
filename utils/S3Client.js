@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk')
+const S3Error = require('./S3Error')
 
 class S3Client {
 
@@ -10,10 +11,7 @@ class S3Client {
             Prefix: prefix,
             StartAfter: dir
         }
-        return S3Client.s3.listObjectsV2(paramsListObjectV2, (err, data) => {
-            if (err) return err
-            else return data
-        }).promise()
+        return S3Client.s3.listObjectsV2(paramsListObjectV2, (err, data) => S3Client.callBackS3(err, data)).promise()
     }
 
     static getSignedUrl(bucketName, fileKey) {
@@ -31,13 +29,14 @@ class S3Client {
             Bucket: bucketName,
             Key: key
         }
-        return S3Client.s3.putObject(paramsPutObject, function (err, data) {
-            if (err) {
-                console.log(err)
-            } else {
-                console.log("Successfully uploaded")
-            }
-        })
+        return S3Client.s3.putObject(paramsPutObject, (err, data) => S3Client.callBackS3(err, data)).promise()
+    }
+
+    static callBackS3(err, data) {
+        if (err) {
+            console.log(err, err.stack)
+            throw new S3Error(err)
+        }
     }
 
 }

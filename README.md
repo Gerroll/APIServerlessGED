@@ -5,3 +5,5 @@
 `sls offline`
 
 `sls deploy`
+
+`sls logs -f postDocument -t`

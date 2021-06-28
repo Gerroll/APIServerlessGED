@@ -9,12 +9,13 @@ const gedDirPathS3 = "ged/"
 const tableName = "Document"
 
 
+/* Return the list of all documents already uploaded */
 module.exports.getDocuments = async (event) => {
     const itemListDb = await DynamoBbClient.selectAll(tableName)
 
     const itemListJson = []
 
-    // Convert s3 class to json format
+    // Convert dynamoDb class to json format
     itemListDb.Items.forEach((object) => {
         itemListJson.push({
             "uuid": object.uuid.S,
@@ -24,6 +25,9 @@ module.exports.getDocuments = async (event) => {
     return HttpResponseUtils.getReponse(200, itemListJson)
 }
 
+/* Return a signed URL to download the file from your navigator 
+*   - uuid: need to past in the url as : /documents/:uuid 
+*/
 module.exports.getDocumentWhereUuid = async (event) => {
     const pathParameters = event.pathParameters
 
@@ -35,9 +39,6 @@ module.exports.getDocumentWhereUuid = async (event) => {
     const uuid = pathParameters.uuid
 
     const item = await DynamoBbClient.selectWhereUuid(tableName, uuid)
-    console.log("item")
-    console.log(item)
-    console.log("item")
     const url = S3Client.getSignedUrl(bucketName, item.Item.keyDocument.S)
 
     return HttpResponseUtils.getReponse(200, {
@@ -45,6 +46,11 @@ module.exports.getDocumentWhereUuid = async (event) => {
     })
 }
 
+
+/* Upload a file to AWS S3 and return his uuid store in DynamoDB
+*   File must be past in a "form-data" template
+*   with the parameter name "file"
+*/
 module.exports.postDocument = async (event) => {
     let formData
     try {
@@ -72,17 +78,13 @@ module.exports.postDocument = async (event) => {
     const fileName = fileParam['filename']
     const keyDocument = gedDirPathS3 + fileName
 
-    console.log(newUuid)
-    console.log(fileName)
-    console.log(keyDocument)
-
     const itemWhereFileName = await DynamoBbClient.scanWhereFileName(tableName, fileName)
 
     if (itemWhereFileName.Items.length > 0) {
         return HttpResponseUtils.getReponseError(400, "File already exist in BDD")
     }
 
-    // DynamoDb Put
+    // DynamoDb Put item
     var itemToAdd = {
         "uuid": {
             S: newUuid
@@ -97,7 +99,7 @@ module.exports.postDocument = async (event) => {
 
     await DynamoBbClient.putItem(tableName, itemToAdd)
 
-    // S3 Put
+    // S3 Put object
     await S3Client.putObject(bucketName, fileParam['file'], gedDirPathS3 + fileParam['filename'])
 
     return HttpResponseUtils.getReponse(201, {

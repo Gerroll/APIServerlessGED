@@ -5,3 +5,5 @@ class FormDataError extends Error {
         this.name = "FormDataError"
     }
 }
+
+module.exports = FormDataError

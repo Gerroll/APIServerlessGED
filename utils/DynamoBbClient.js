@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk')
+const DynamoDbError = require('./DynamoDbError')
 
 class DynamoBbClient {
 
@@ -13,20 +14,14 @@ class DynamoBbClient {
                 }
             }
         }
-        return DynamoBbClient.dynamodb.getItem(paramsWhereUuid, function (err, data) {
-            if (err) console.log(err, err.stack)
-            else console.log(data)
-        }).promise()
+        return DynamoBbClient.dynamodb.getItem(paramsWhereUuid,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static selectAll(tableName) {
         const paramsScan = {
             TableName: tableName
         }
-        return DynamoBbClient.dynamodb.scan(paramsScan, function (err, data) {
-            if (err) console.log(err, err.stack)
-            else console.log(data)
-        }).promise()
+        return DynamoBbClient.dynamodb.scan(paramsScan,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static putItem(tableName, item) {
@@ -34,27 +29,18 @@ class DynamoBbClient {
             Item: item,
             TableName: tableName
         }
-        return DynamoBbClient.dynamodb.putItem(paramsPutItem, function (err, data) {
-            if (err) console.log(err, err.stack)
-            else console.log(data)
-        }).promise()
+        return DynamoBbClient.dynamodb.putItem(paramsPutItem,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static describeTable(tableName) {
         const paramsDescribeTable = {
             TableName: tableName
         }
-        return DynamoBbClient.dynamodb.describeTable(paramsDescribeTable, function (err, data) {
-            if (err) console.log(err, err.stack)
-            else console.log(data)
-        }).promise()
+        return DynamoBbClient.dynamodb.describeTable(paramsDescribeTable,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static listTables() {
-        return DynamoBbClient.dynamodb.listTables({}, function (err, data) {
-            if (err) console.log(err, err.stack)
-            else console.log("ici", data)
-        })
+        return DynamoBbClient.dynamodb.listTables({},(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static scanWhereFileName(tableName, fileName) {
@@ -68,10 +54,14 @@ class DynamoBbClient {
             },
             ProjectionExpression: "fileName"
         }
-        return DynamoBbClient.dynamodb.scan(params, function (err, data) {
-            if (err) console.log(err, err.stack)
-            else console.log(data)
-        }).promise()
+        return DynamoBbClient.dynamodb.scan(params, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+    }
+
+    static callBackDynamoDb(err, data) {
+        if (err) {
+            console.log(err, err.stack)
+            throw new DynamoDbError(err)
+        }
     }
 }
 

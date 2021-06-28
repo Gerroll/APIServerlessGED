@@ -17,10 +17,7 @@ class FormData {
     }
 
     checkIfFormData() {
-        const contentLength = parseInt(this.event.headers["Content-Length"])
-        if (isNaN(contentLength)) {
-            throw new FormDataError("Length required")
-        }
+        console.log(this.event)
 
         let contentType = this.event.headers["Content-Type"]
         if (!contentType) {

@@ -17,8 +17,6 @@ class FormData {
     }
 
     checkIfFormData() {
-        console.log(this.event)
-
         let contentType = this.event.headers["Content-Type"]
         if (!contentType) {
             throw new FormDataError("Content type undefined")

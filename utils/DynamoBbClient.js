@@ -14,14 +14,14 @@ class DynamoBbClient {
                 }
             }
         }
-        return DynamoBbClient.dynamodb.getItem(paramsWhereUuid,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+        return DynamoBbClient.dynamodb.getItem(paramsWhereUuid, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static selectAll(tableName) {
         const paramsScan = {
             TableName: tableName
         }
-        return DynamoBbClient.dynamodb.scan(paramsScan,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+        return DynamoBbClient.dynamodb.scan(paramsScan, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static putItem(tableName, item) {
@@ -29,18 +29,26 @@ class DynamoBbClient {
             Item: item,
             TableName: tableName
         }
-        return DynamoBbClient.dynamodb.putItem(paramsPutItem,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+        return DynamoBbClient.dynamodb.putItem(paramsPutItem, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+    }
+
+    static deleteItem(tableName, item) {
+        const paramsDeleteItem = {
+            Key: item,
+            TableName: tableName
+        }
+        return DynamoBbClient.dynamodb.deleteItem(paramsDeleteItem, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static describeTable(tableName) {
         const paramsDescribeTable = {
             TableName: tableName
         }
-        return DynamoBbClient.dynamodb.describeTable(paramsDescribeTable,(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+        return DynamoBbClient.dynamodb.describeTable(paramsDescribeTable, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static listTables() {
-        return DynamoBbClient.dynamodb.listTables({},(err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
+        return DynamoBbClient.dynamodb.listTables({}, (err, data) => DynamoBbClient.callBackDynamoDb(err, data)).promise()
     }
 
     static scanWhereFileName(tableName, fileName) {

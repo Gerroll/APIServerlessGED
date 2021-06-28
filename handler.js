@@ -3,6 +3,7 @@ const DynamoBbClient = require('./utils/DynamoBbClient')
 const FormData = require('./utils/FormData')
 const HttpResponseUtils = require('./utils/HttpResponseUtils')
 const { v4: uuidv4 } = require('uuid')
+const S3Error = require('./utils/S3Error')
 
 const bucketName = process.env.s3bucketone
 const gedDirPathS3 = "ged/"
@@ -32,7 +33,6 @@ module.exports.getDocumentWhereUuid = async (event) => {
     const pathParameters = event.pathParameters
 
     if (!('uuid' in pathParameters)) {
-        console.log(pathParameters)
         return HttpResponseUtils.getReponseError(400, "Missing path parameter 'uuid'")
     }
 
@@ -57,8 +57,6 @@ module.exports.getDocumentWhereUuid = async (event) => {
 *   with the parameter name "file"
 */
 module.exports.postDocument = async (event) => {
-    console.log(bucketName)
-
     let formData
     try {
         formData = new FormData(event)
@@ -81,42 +79,45 @@ module.exports.postDocument = async (event) => {
         return HttpResponseUtils.getReponseError(400, "Missing 'file' parameter")
     }
 
+
     const newUuid = uuidv4()
     const fileName = fileParam['filename']
     const keyDocument = gedDirPathS3 + fileName
 
-    const itemWhereFileName = await DynamoBbClient.scanWhereFileName(tableName, fileName)
+    try {
+        const itemWhereFileName = await DynamoBbClient.scanWhereFileName(tableName, fileName)
 
-    if (itemWhereFileName.Items.length > 0) {
-        return HttpResponseUtils.getReponseError(400, "File already exist in BDD")
+        if (itemWhereFileName.Items.length > 0) {
+            return HttpResponseUtils.getReponseError(400, "File already exist in BDD")
+        }
+    } catch (error) {
+        // TODO Delete DB line
+        return HttpResponseUtils.getReponseError(400, error.message)
     }
 
     // DynamoDb Put item
     var itemToAdd = {
-        "uuid": {
-            S: newUuid
-        },
-        "keyDocument": {
-            S: keyDocument
-        },
-        "fileName": {
-            S: fileName
-        }
+        "uuid": { S: newUuid },
+        "keyDocument": { S: keyDocument },
+        "fileName": { S: fileName }
     }
 
-    await DynamoBbClient.putItem(tableName, itemToAdd)
-
-    // S3 Put object
     try {
+        await DynamoBbClient.putItem(tableName, itemToAdd)
+    } catch (error) {
+        // TODO Delete DB line
+        return HttpResponseUtils.getReponseError(400, error.message)
+    }
+
+    try {
+        // S3 Put object
         await S3Client.putObject(bucketName, fileParam['file'], gedDirPathS3 + fileParam['filename'])
     } catch (error) {
-        console.log("ERROR: Deleting db line")
-        // Delete db line        
+        await DynamoBbClient.deleteItem(tableName, itemToAdd)
+        return HttpResponseUtils.getReponseError(400, error.message)
     }
 
     return HttpResponseUtils.getReponse(201, {
-        newDocument: {
-            uuid: newUuid,
-        }
+        uuid: newUuid,
     })
 }

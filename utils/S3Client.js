@@ -35,7 +35,7 @@ class S3Client {
     static callBackS3(err, data) {
         if (err) {
             console.log(err, err.stack)
-            throw new S3Error(err)
+            throw new S3Error(err.message)
         }
     }
 

@@ -20,6 +20,7 @@ provider:
             - dynamodb:Scan
             - dynamodb:GetItem
             - dynamodb:PutItem
+            - dynamodb:DeleteItem
             - s3:ListObjectsV2
             - s3:GetSignedUrl
             - s3:PutObject

@@ -13,7 +13,7 @@ class HttpResponseUtils {
             statusCode: statusCode,
             headers: {},
             body: JSON.stringify({
-                errMsg: errMsg
+                error: errMsg
             })
         }
     }

@@ -39,6 +39,11 @@ module.exports.getDocumentWhereUuid = async (event) => {
     const uuid = pathParameters.uuid
 
     const item = await DynamoBbClient.selectWhereUuid(tableName, uuid)
+
+    if (!item || !item.Item) {
+        return HttpResponseUtils.getReponseError(400, "Path parameter 'uuid' don't exist in DB")
+    }
+
     const url = S3Client.getSignedUrl(bucketName, item.Item.keyDocument.S)
 
     return HttpResponseUtils.getReponse(200, {

@@ -1,6 +1,7 @@
 service: myservice
 app: myged
 org: gerrol
+useDotenv: true
 
 frameworkVersion: '2'
 
@@ -8,11 +9,8 @@ provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
-  s3:
-    bucketOne:
-      name: my-custom-bucket-name_bis
   environment:
-    S3_BUCKET_ONE: myservice-dev-serverlessdeploymentbucket-16p4l635t4lyj
+    s3bucketone: ${env:S3_BUCKET_ONE}
   iam:
     role:
       statements:

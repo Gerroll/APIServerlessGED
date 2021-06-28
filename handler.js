@@ -4,7 +4,7 @@ const FormData = require('./utils/FormData')
 const HttpResponseUtils = require('./utils/HttpResponseUtils')
 const { v4: uuidv4 } = require('uuid')
 
-const bucketName = process.env.S3_BUCKET_ONE
+const bucketName = process.env.s3bucketone
 const gedDirPathS3 = "ged/"
 const tableName = "Document"
 
@@ -57,6 +57,8 @@ module.exports.getDocumentWhereUuid = async (event) => {
 *   with the parameter name "file"
 */
 module.exports.postDocument = async (event) => {
+    console.log(bucketName)
+
     let formData
     try {
         formData = new FormData(event)
@@ -105,7 +107,12 @@ module.exports.postDocument = async (event) => {
     await DynamoBbClient.putItem(tableName, itemToAdd)
 
     // S3 Put object
-    await S3Client.putObject(bucketName, fileParam['file'], gedDirPathS3 + fileParam['filename'])
+    try {
+        await S3Client.putObject(bucketName, fileParam['file'], gedDirPathS3 + fileParam['filename'])
+    } catch (error) {
+        console.log("ERROR: Deleting db line")
+        // Delete db line        
+    }
 
     return HttpResponseUtils.getReponse(201, {
         newDocument: {
